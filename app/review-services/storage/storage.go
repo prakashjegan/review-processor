@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"zuzu/review-service/models"
+	"github.com/prakashjegan/review-processor/app/review-services/models"
 )
 
 type Storage interface {
@@ -95,4 +95,4 @@ func (s *InMemoryStorage) GetUnprocessedFiles() ([]*models.File, error) {
 		}
 	}
 	return unprocessed, nil
-} 
+}
