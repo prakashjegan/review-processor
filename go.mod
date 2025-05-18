@@ -1,9 +1,6 @@
 module github.com/prakashjegan/review-processor
 
-go 1.21.0
-
-
-toolchain go1.22.5
+go 1.22.5
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.25.3
