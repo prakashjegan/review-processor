@@ -1,81 +1,56 @@
 package main
 
 import (
+	"fmt"
 	"log"
-	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/prakashjegan/app/review-processor/config"
-	"github.com/prakashjegan/app/review-processor/review-services/database"
-	"github.com/prakashjegan/app/review-processor/review-services/utils"
+	gconfig "github.com/prakashjegan/review-processor/app/config"
+	gdatabase "github.com/prakashjegan/review-processor/app/database"
+	"github.com/prakashjegan/review-processor/app/database/migrate"
+	sch "github.com/prakashjegan/review-processor/app/review-services/scheduler"
 )
 
 func main() {
 	// Load configuration
-	cfg, err := config.LoadConfig()
+	err := gconfig.Config()
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		fmt.Println(err)
+		return
 	}
+	fmt.Println("Completed Config")
+	// read configs
+	configure := gconfig.GetConfig()
 
-	// Initialize database
-	db, err := database.NewDatabase(cfg)
-	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
-	}
-
-	// Run database migrations
-	if err := db.AutoMigrate(); err != nil {
-		log.Fatalf("Failed to run database migrations: %v", err)
-	}
-
-	// Initialize S3 client
-	s3Client, err := utils.NewS3Client(cfg, db)
-	if err != nil {
-		log.Fatalf("Failed to initialize S3 client: %v", err)
-	}
-
-	// Wait for interrupt signal
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	// Start processing files
-	go func() {
-		for {
-			select {
-			case <-sigChan:
-				log.Println("Shutting down...")
-				return
-			default:
-				// Get unprocessed files
-				files, err := s3Client.GetUnprocessedFiles(nil)
-				if err != nil {
-					log.Printf("Error getting unprocessed files: %v", err)
-					continue
-				}
-
-				// Process each file
-				for _, file := range files {
-					// Download file
-					data, err := s3Client.DownloadFile(nil, file.S3Key)
-					if err != nil {
-						log.Printf("Error downloading file %s: %v", file.S3Key, err)
-						s3Client.UpdateFileStatus(file.ID, "FAILED", err.Error())
-						continue
-					}
-
-					// TODO: Add your file processing logic here
-					log.Printf("Processing file %s with size %d bytes", file.S3Key, len(data))
-
-					// Update file status
-					if err := s3Client.UpdateFileStatus(file.ID, "COMPLETED", ""); err != nil {
-						log.Printf("Error updating file status: %v", err)
-					}
-				}
-			}
+	if configure.Database.RDBMS.Activate == gconfig.Activated {
+		// Initialize RDBMS client
+		if err := gdatabase.InitDB().Error; err != nil {
+			fmt.Println(err)
+			return
 		}
-	}()
 
-	<-sigChan
+		// TODO ::::: Use Only this code.
+		if err := migrate.DropAllTablesWithActual(); err != nil {
+			fmt.Println(err)
+			return
+		}
+
+		// Start DB migration
+		if err := migrate.StartMigrationWithActualData(*configure); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
+	if configure.Database.REDIS.Activate == gconfig.Activated {
+		// Initialize REDIS client
+		if _, err := gdatabase.InitRedis(); err != nil {
+			fmt.Println(err)
+			return
+		}
+	}
+
+	scheduler := sch.NewReviewScheduler(configure)
+	scheduler.Start()
+
 	log.Println("Shutting down...")
 }
