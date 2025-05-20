@@ -31,7 +31,8 @@ func (j *JobFactoryImpl) CreateJob(jobType string) (job quartz.Job, err error) {
 	case "REVIEW_SCHEDULER":
 		// Get configuration from the config package
 		config := config.GetConfig()
-		job = NewReviewJob(config)
+
+		job = NewReviewJob(jobType, config)
 	default:
 		err = errors.New("unknown job type")
 	}

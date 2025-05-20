@@ -22,8 +22,9 @@ type KafkaConfig struct {
 
 // RDBMS - relational database variables
 type RDBMS struct {
-	Activate string
-	Env      struct {
+	Activate          string
+	CreateTableIgnore bool
+	Env               struct {
 		Driver   string
 		Host     string
 		Port     string

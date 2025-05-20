@@ -154,6 +154,13 @@ func databaseRDBMS() (databaseConfig DatabaseConfig, err error) {
 
 	// Env
 	databaseConfig.RDBMS.Env.Driver = strings.TrimSpace(os.Getenv("DB_DRIVER"))
+	tableIgnore := strings.TrimSpace(os.Getenv("CREATE_TABLE_IGNORE"))
+	if tableIgnore == "true" {
+		databaseConfig.RDBMS.CreateTableIgnore = true
+	} else {
+		databaseConfig.RDBMS.CreateTableIgnore = false
+	}
+
 	databaseConfig.RDBMS.Env.Host = strings.TrimSpace(os.Getenv("DB_HOST"))
 	databaseConfig.RDBMS.Env.Port = strings.TrimSpace(os.Getenv("DB_PORT"))
 	databaseConfig.RDBMS.Env.TimeZone = strings.TrimSpace(os.Getenv("DB_TIMEZONE"))
