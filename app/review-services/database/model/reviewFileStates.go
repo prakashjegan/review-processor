@@ -15,6 +15,9 @@ type ReviewFileStates struct {
 	FileId          string    `json:"fileId,omitempty"`
 	Message         string    `json:"message,omitempty"`
 
+	TotalRows       int            `json:"totalRows,omitempty"`
+	SuccessfulRows  int            `json:"successfulRows,omitempty"`
+	FailedRows      int            `json:"failedRows,omitempty"`
 	CreatedAt       time.Time      `gorm:"autoCreateTime;index" json:"createdAt,omitempty"`
 	UpdatedAt       time.Time      `gorm:"autoUpdateTime;index" json:"updatedAt,omitempty"`
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`

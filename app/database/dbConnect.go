@@ -86,7 +86,7 @@ func InitDB() *gorm.DB {
 		}
 		// Only for debugging
 		if err == nil {
-			fmt.Println("DB connection successful!")
+			log.Info("DB connection successful!")
 		}
 
 	case "postgres":
@@ -111,7 +111,7 @@ func InitDB() *gorm.DB {
 		}
 		// Only for debugging
 		if err == nil {
-			fmt.Println("DB connection successful!")
+			log.Info("DB connection successful!")
 		}
 		log.Info("PostgreSQL driver Completed")
 
@@ -125,7 +125,7 @@ func InitDB() *gorm.DB {
 		}
 		// Only for debugging
 		if err == nil {
-			fmt.Println("DB connection successful!")
+			log.Info("DB connection successful!")
 		}
 
 	default:
@@ -161,7 +161,7 @@ func InitRedis() (*radix.Client, error) {
 	}
 	// Only for debugging
 	if err == nil {
-		fmt.Println("REDIS pool connection successful!")
+		log.Info("REDIS pool connection successful!")
 	}
 
 	redisClient = &rClient

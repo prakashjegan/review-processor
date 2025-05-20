@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 
 	log "github.com/sirupsen/logrus"
 
@@ -17,7 +16,7 @@ func main() {
 	// Load configuration
 	err := gconfig.Config()
 	if err != nil {
-		fmt.Println(err)
+		log.Info(err)
 		return
 	}
 	log.Info("Starting up...")
@@ -29,19 +28,19 @@ func main() {
 		log.Info("Configurations :::: %+v :::: %s ", configure, configure.Database.RDBMS.Activate)
 
 		if err := gdatabase.InitDB().Error; err != nil {
-			fmt.Println(err)
+			log.Info(err)
 			return
 		}
 
 		// TODO ::::: Use Only this code.
 		if err := migrate.DropAllTablesWithActual(); err != nil {
-			fmt.Println(err)
+			log.Info(err)
 			return
 		}
 
 		// Start DB migration
 		if err := migrate.StartMigrationWithActualData(*configure); err != nil {
-			fmt.Println(err)
+			log.Info(err)
 			return
 		}
 	}
@@ -49,7 +48,7 @@ func main() {
 	if configure.Database.REDIS.Activate == gconfig.Activated {
 		// Initialize REDIS client
 		if _, err := gdatabase.InitRedis(); err != nil {
-			fmt.Println(err)
+			log.Info(err)
 			return
 		}
 	}

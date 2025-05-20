@@ -1,10 +1,10 @@
 package uid64
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
+	"github.com/google/martian/log"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +37,7 @@ func TestInitUID(t *testing.T) {
 		// InitUID and prepare expected timestamp
 		id, err := InitUID(c.timestamp, c.entropy, c.generatorID, c.counter)
 		if err != nil {
-			fmt.Println(err)
+			log.Info(err)
 			t.FailNow()
 		}
 		expectedTS := c.timestamp & 0x0000ffffffffffff

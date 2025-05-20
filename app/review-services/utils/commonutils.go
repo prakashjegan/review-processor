@@ -4,7 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/prakashjegan/review-processor/app/review-services/utils/uid64"
+	"github.com/prakashjegan/review-processor/app/review-services/uid64"
 )
 
 func GetUID() uint64 {

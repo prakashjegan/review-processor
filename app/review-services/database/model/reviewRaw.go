@@ -6,9 +6,21 @@ import (
 	"gorm.io/gorm"
 )
 
+type RowProcessingState string
+
+const (
+	RowProcessingStatePending RowProcessingState = "pending"
+	RowProcessingStateRunning RowProcessingState = "running"
+	RowProcessingStateSuccess RowProcessingState = "success"
+	RowProcessingStateFailed  RowProcessingState = "failed"
+)
+
 type ReviewRaw struct {
-	ID                uint64 `gorm:"primaryKey" json:"id,omitempty"`
-	ReviewFileStateId uint64 `gorm:"index" json:"reviewFileStateId,omitempty"`
+	ID                     uint64 `gorm:"primaryKey" json:"id,omitempty"`
+	ReviewFileStateId      uint64 `gorm:"index" json:"reviewFileStateId,omitempty"`
+	RawIdentifier          string `gorm:"uniqueIndex:idx_review_raw_identifier,not null" json:"identifier,omitempty"`
+	ThirdPartyProviderName string `gorm:"index" json:"thirdPartyProviderName,omitempty"`
+	ThirdPartyProviderId   string `gorm:"index" json:"thirdPartyProviderId,omitempty"`
 
 	RawData       string    `json:"rawData,omitempty"`
 	Status        string    `json:"status,omitempty"`

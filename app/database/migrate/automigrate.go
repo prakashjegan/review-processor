@@ -2,8 +2,7 @@
 package migrate
 
 import (
-	"fmt"
-
+	"github.com/google/martian/log"
 	gconfig "github.com/prakashjegan/review-processor/app/config"
 	gdatabase "github.com/prakashjegan/review-processor/app/database"
 	modeld "github.com/prakashjegan/review-processor/app/review-services/database/model"
@@ -63,7 +62,7 @@ func DropAllTablesWithActual() error {
 		return err
 	}
 
-	fmt.Println("old tables are deleted!")
+	log.Info("old tables are deleted!")
 	return nil
 }
 
@@ -97,6 +96,6 @@ func StartMigrationWithActualData(configure gconfig.Configuration) error {
 		return err
 	}
 
-	fmt.Println("new tables are  migrated successfully!")
+	log.Info("new tables are  migrated successfully!")
 	return nil
 }

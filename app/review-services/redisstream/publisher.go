@@ -2,8 +2,10 @@ package redisstream
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/prakashjegan/review-processor/app/config"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -43,11 +45,34 @@ func (p *Publisher) PublishMessage(ctx context.Context, message Message) (string
 	args = append(args, "timestamp", message.Timestamp.Unix())
 
 	// Publish to Redis Stream
-	cmd := p.client.XAdd(ctx, args...)
+	a := &redis.XAddArgs{
+		Stream: p.streamKey,
+		ID:     message.ID,
+		Values: message.Data,
+	}
+	cmd := p.client.XAdd(ctx, a)
 	return cmd.Result()
 }
 
 // Close closes the Redis client connection
 func (p *Publisher) Close() error {
 	return p.client.Close()
+}
+
+func PublishToRedisStream(ctx context.Context, message Message) (string, error) {
+	redisClient := GetRedisClient()
+	publisher := NewPublisher(redisClient, "reviews")
+	return publisher.PublishMessage(ctx, message)
+}
+
+func GetRedisClient() *redis.Client {
+	config := config.GetConfig()
+	redisv := config.Database.REDIS
+
+	options := &redis.Options{
+		Addr:     fmt.Sprintf("%s:%s", redisv.Env.Host, redisv.Env.Port),
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	}
+	return redis.NewClient(options)
 }
