@@ -6,46 +6,31 @@ import (
 
 	gconfig "github.com/prakashjegan/review-processor/app/config"
 	gdatabase "github.com/prakashjegan/review-processor/app/database"
+	modeld "github.com/prakashjegan/review-processor/app/review-services/database/model"
 )
 
-// DropAllTables - careful! It will drop all the tables!
+type jobEvent modeld.JobEvent
+type productReview modeld.ProductReview
+type reviewComment modeld.ReviewComment
+type reviewerInfo modeld.ReviewerInfo
+type productReviewByProvider modeld.ProductReviewByProvider
+type productReviewGrade modeld.ProductReviewGrade
+type reviewFileStates modeld.ReviewFileStates
+type reviewRaw modeld.ReviewRaw
+type thirdPartyConfig modeld.ThirdPartyConfig
+type transformerMapping modeld.TransformerMapping
+type thirdPartyEvent modeld.ThirdPartyEvent
 
-func ShouldMigrate() bool {
-	return false
-	//return true
-}
+type productReviewEvent modeld.ProductReviewEvent
+type reviewCommentEvent modeld.ReviewCommentEvent
+type reviewerInfoEvent modeld.ReviewerInfoEvent
+type productReviewByProviderEvent modeld.ProductReviewByProviderEvent
+type productReviewGradeEvent modeld.ProductReviewGradeEvent
 
 func ShouldMigrateLimited() bool {
 
-	return false
+	return true
 	//return true
-}
-func DropAllTables() error {
-	db := gdatabase.GetDB()
-
-	if err := db.Migrator().DropTable(); err != nil {
-		return err
-	}
-
-	fmt.Println("old tables are deleted!")
-	return nil
-}
-
-// DropAllTables - careful! It will drop all the tables!
-func DropAllTablesLimited() error {
-	//doMigration := false
-	doMigration := ShouldMigrate()
-	if !doMigration {
-		return nil
-	}
-	db := gdatabase.GetDB()
-
-	if err := db.Migrator().DropTable(); err != nil {
-		return err
-	}
-
-	fmt.Println("old tables are deleted!")
-	return nil
 }
 
 // DropAllTables - careful! It will drop all the tables!
@@ -57,7 +42,24 @@ func DropAllTablesWithActual() error {
 	}
 	db := gdatabase.GetDB()
 
-	if err := db.Migrator().DropTable(); err != nil {
+	if err := db.Migrator().DropTable(
+		&jobEvent{},
+		&productReview{},
+		&reviewComment{},
+		&reviewerInfo{},
+		&productReviewByProvider{},
+		&productReviewGrade{},
+		&reviewFileStates{},
+		&reviewRaw{},
+		&thirdPartyConfig{},
+		&transformerMapping{},
+		&thirdPartyEvent{},
+		&productReviewEvent{},
+		&reviewCommentEvent{},
+		&reviewerInfoEvent{},
+		&productReviewByProviderEvent{},
+		&productReviewGradeEvent{},
+	); err != nil {
 		return err
 	}
 
@@ -72,54 +74,26 @@ func StartMigrationWithActualData(configure gconfig.Configuration) error {
 		return nil
 	}
 	db := gdatabase.GetDB()
-	configureDB := configure.Database.RDBMS
-	driver := configureDB.Env.Driver
 
-	if driver == "mysql" {
-		// db.Set() --> add table suffix during auto migration
-		if err := db.Set("gorm:table_options", "ENGINE=InnoDB").AutoMigrate(); err != nil {
-			return err
-		}
+	if err := db.AutoMigrate(
+		&jobEvent{},
+		&productReview{},
+		&reviewComment{},
+		&reviewerInfo{},
+		&productReviewByProvider{},
+		&productReviewGrade{},
+		&reviewFileStates{},
+		&reviewRaw{},
+		&thirdPartyConfig{},
+		&transformerMapping{},
+		&thirdPartyEvent{},
+		&productReviewEvent{},
+		&reviewCommentEvent{},
+		&reviewerInfoEvent{},
+		&productReviewByProviderEvent{},
+		&productReviewGradeEvent{},
+	); err != nil {
 
-		fmt.Println("new tables are  migrated successfully!")
-		return nil
-	}
-
-	if err := db.AutoMigrate(); err != nil {
-
-		return err
-	}
-
-	fmt.Println("new tables are  migrated successfully!")
-	return nil
-}
-
-// StartMigration - automatically migrate all the tables
-// - Only create tables with missing columns and missing indexes
-// - Will not change/delete any existing columns and their types
-func StartMigrationLimited(configure gconfig.Configuration) error {
-	//doMigration := false
-	doMigration := ShouldMigrate()
-	if !doMigration {
-		return nil
-	}
-	db := gdatabase.GetDB()
-
-	if err := db.AutoMigrate(); err != nil {
-		return err
-	}
-
-	fmt.Println("new tables are  migrated successfully!")
-	return nil
-}
-
-// StartMigration - automatically migrate all the tables
-// - Only create tables with missing columns and missing indexes
-// - Will not change/delete any existing columns and their types
-func StartMigration(configure gconfig.Configuration) error {
-	db := gdatabase.GetDB()
-
-	if err := db.AutoMigrate(); err != nil {
 		return err
 	}
 

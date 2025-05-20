@@ -57,7 +57,7 @@ func InitDB() *gorm.DB {
 	maxOpenConns := configureDB.Conn.MaxOpenConns
 	connMaxLifetime := configureDB.Conn.ConnMaxLifetime
 	logLevel := configureDB.Log.LogLevel
-
+	log.Info("DriverName := ", driver)
 	switch driver {
 	case "mysql":
 		dsn := username + ":" + password + "@tcp(" + host + ":" + port + ")/" + database + "?charset=utf8mb4&parseTime=True&loc=Local"
@@ -90,6 +90,8 @@ func InitDB() *gorm.DB {
 		}
 
 	case "postgres":
+		log.Info("PostgreSQL driver Started!")
+		sslmode = "disable"
 		dsn := "host=" + host + " port=" + port + " user=" + username + " dbname=" + database + " password=" + password + " sslmode=" + sslmode + " TimeZone=" + timeZone
 		sqlDB, err = sql.Open(driver, dsn)
 		if err != nil {
@@ -111,6 +113,7 @@ func InitDB() *gorm.DB {
 		if err == nil {
 			fmt.Println("DB connection successful!")
 		}
+		log.Info("PostgreSQL driver Completed")
 
 	case "sqlite3":
 		db, err = gorm.Open(sqlite.Open(database), &gorm.Config{

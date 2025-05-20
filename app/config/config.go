@@ -9,11 +9,14 @@ import (
 	"strings"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/joho/godotenv"
 )
 
 // Activated - "yes" keyword to activate a service
-const Activated string = "yes"
+// const Activated string = "yes"
+const Activated string = "true"
 
 // Configuration - server and db configuration variables
 type Configuration struct {
@@ -147,6 +150,7 @@ func databaseRDBMS() (databaseConfig DatabaseConfig, err error) {
 	if err != nil {
 		return
 	}
+	log.Infof("Loading RDBMS configuration")
 
 	// Env
 	databaseConfig.RDBMS.Env.Driver = strings.TrimSpace(os.Getenv("DB_DRIVER"))
@@ -168,13 +172,22 @@ func databaseRDBMS() (databaseConfig DatabaseConfig, err error) {
 	dbMaxIdleConns := strings.TrimSpace(os.Getenv("DB_MAXIDLECONNS"))
 	dbMaxOpenConns := strings.TrimSpace(os.Getenv("DB_MAXOPENCONNS"))
 	dbConnMaxLifetime := strings.TrimSpace(os.Getenv("DB_CONNMAXLIFETIME"))
+	if dbMaxIdleConns == "" {
+		dbMaxIdleConns = "10"
+	}
 	databaseConfig.RDBMS.Conn.MaxIdleConns, err = strconv.Atoi(dbMaxIdleConns)
 	if err != nil {
 		return
 	}
+	if dbMaxOpenConns == "" {
+		dbMaxOpenConns = "10"
+	}
 	databaseConfig.RDBMS.Conn.MaxOpenConns, err = strconv.Atoi(dbMaxOpenConns)
 	if err != nil {
 		return
+	}
+	if dbConnMaxLifetime == "" {
+		dbConnMaxLifetime = "1h"
 	}
 	databaseConfig.RDBMS.Conn.ConnMaxLifetime, err = time.ParseDuration(dbConnMaxLifetime)
 	if err != nil {
@@ -183,6 +196,10 @@ func databaseRDBMS() (databaseConfig DatabaseConfig, err error) {
 
 	// Logger
 	dbLogLevel := strings.TrimSpace(os.Getenv("DB_LOG_LEVEL"))
+	if dbLogLevel == "" {
+		dbLogLevel = "0"
+	}
+
 	databaseConfig.RDBMS.Log.LogLevel, err = strconv.Atoi(dbLogLevel)
 	if err != nil {
 		return

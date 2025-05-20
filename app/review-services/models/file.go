@@ -14,7 +14,8 @@ const (
 )
 
 type File struct {
-	ID          int64      `json:"id"`
+	ID          uint64     `json:"id"`
+	Name        string     `json:"name"`
 	S3Key       string     `json:"s3_key"`
 	Checksum    string     `json:"checksum"`
 	Status      FileStatus `json:"status"`
@@ -23,6 +24,9 @@ type File struct {
 	ProcessedAt *time.Time `json:"processed_at"`
 	CreatedAt   time.Time  `json:"created_at"`
 	UpdatedAt   time.Time  `json:"updated_at"`
+
+	Data []byte   `json:"data"`
+	Rows []string `json:"rows"`
 }
 
 type FileEvent struct {

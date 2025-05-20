@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"time"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	configr "github.com/prakashjegan/review-processor/app/config"
+	"github.com/prakashjegan/review-processor/app/review-services/database/dao"
 	"github.com/prakashjegan/review-processor/app/review-services/models"
+	"github.com/prakashjegan/review-processor/app/review-services/utils"
+	log "github.com/sirupsen/logrus"
 )
 
 type S3Client struct {
@@ -39,16 +42,14 @@ func NewS3Client(cfg *configr.Configuration) (*S3Client, error) {
 	}, nil
 }
 
-func (s *S3Client) GetUnprocessedFiles(ctx context.Context) ([]*models.File, error) {
+func (s *S3Client) GetUnprocessedFiles(ctx context.Context, forTp string) ([]*models.File, error) {
 	// Get the last processed file from the database
-	lastProcessedFile, err := s.db.GetLastProcessedFile()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get last processed file: %v", err)
-	}
-
+	reviewFileStatedao := dao.GetReviewFileStatesDao()
+	lastProcessedFile, err := reviewFileStatedao.GetLastProcessedFile(forTp)
 	// List all files from S3
 	result, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
-		Bucket: aws.String(s.bucketName),
+		Bucket:     aws.String(s.bucketName),
+		StartAfter: &lastProcessedFile.FileId,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list objects: %v", err)
@@ -56,60 +57,65 @@ func (s *S3Client) GetUnprocessedFiles(ctx context.Context) ([]*models.File, err
 
 	var unprocessedFiles []*models.File
 	for _, object := range result.Contents {
-		// Skip if this file was already processed
-		if lastProcessedFile != nil && *object.Key == lastProcessedFile.S3Key {
-			break
-		}
-
-		// Check if file exists in database
-		existingFile, err := s.db.GetFileByS3Key(*object.Key)
+		//TODO : fetch file object.
+		data, rows, err := s.DownloadFile(ctx, *object.Key)
 		if err != nil {
-			return nil, fmt.Errorf("failed to check existing file: %v", err)
-		}
-
-		if existingFile == nil {
-			// Create new file record
+			log.Debugf("\nError downloading file: %v\n", err)
+			//continue
 			file := &models.File{
+				ID:         utils.GetUID(),
+				Name:       *object.Key,
 				S3Key:      *object.Key,
-				Status:     models.FileStatusPending,
+				Checksum:   utils.GenerateChecksum(data),
+				Status:     models.FileStatusFailed,
 				RetryCount: 0,
-				CreatedAt:  time.Now(),
-				UpdatedAt:  time.Now(),
-			}
-			if err := s.db.SaveFile(file); err != nil {
-				return nil, fmt.Errorf("failed to save file record: %v", err)
+				LastError:  err.Error(),
+				Data:       data,
+				Rows:       rows,
 			}
 			unprocessedFiles = append(unprocessedFiles, file)
-		} else if existingFile.Status == models.FileStatusPending || existingFile.Status == models.FileStatusFailed {
-			unprocessedFiles = append(unprocessedFiles, existingFile)
+		} else {
+			file := &models.File{
+				ID:         utils.GetUID(),
+				Name:       *object.Key,
+				S3Key:      *object.Key,
+				Checksum:   utils.GenerateChecksum(data),
+				Status:     models.FileStatusPending,
+				RetryCount: 0,
+				LastError:  "",
+				Data:       data,
+				Rows:       rows,
+			}
+			unprocessedFiles = append(unprocessedFiles, file)
 		}
+
 	}
 
 	return unprocessedFiles, nil
 }
 
-func (s *S3Client) DownloadFile(ctx context.Context, key string) ([]byte, error) {
+func (s *S3Client) DownloadFile(ctx context.Context, key string) ([]byte, []string, error) {
 	result, err := s.client.GetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(key),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to get object: %v", err)
+		return nil, nil, fmt.Errorf("failed to get object: %v", err)
 	}
 	defer result.Body.Close()
 
 	data, err := io.ReadAll(result.Body)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read object body: %v", err)
+		return nil, nil, fmt.Errorf("failed to read object body: %v", err)
 	}
 
-	return data, nil
+	var rows []string
+	rows = extractRow(data)
+
+	return data, rows, nil
 }
 
-func (s *S3Client) UpdateFileStatus(fileID int64, status models.FileStatus, errorMsg string) error {
-	return s.db.UpdateFileStatus(fileID, status, errorMsg)
-}
-
-func (s *S3Client) SaveFileEvent(event *models.FileEvent) error {
-	return s.db.SaveFileEvent(event)
+func extractRow(data []byte) []string {
+	lines := strings.Split(string(data), "\n")
+	return lines
 }

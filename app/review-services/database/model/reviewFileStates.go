@@ -7,9 +7,14 @@ import (
 )
 
 type ReviewFileStates struct {
-	Id              int64          `gorm:"primaryKey" json:"id,omitempty"`
-	FileName        string         `json:"fileName,omitempty"`
-	State           string         `json:"state,omitempty"`
+	Id              uint64    `gorm:"primaryKey" json:"id,omitempty"`
+	FileName        string    `json:"fileName,omitempty"`
+	State           string    `json:"state,omitempty"`
+	ProcessedDate   time.Time `json:"processedDate,omitempty"`
+	FileCreatedDate time.Time `json:"fileCreatedDate,omitempty"`
+	FileId          string    `json:"fileId,omitempty"`
+	Message         string    `json:"message,omitempty"`
+
 	CreatedAt       time.Time      `gorm:"autoCreateTime;index" json:"createdAt,omitempty"`
 	UpdatedAt       time.Time      `gorm:"autoUpdateTime;index" json:"updatedAt,omitempty"`
 	DeletedAt       gorm.DeletedAt `gorm:"index" json:"-"`

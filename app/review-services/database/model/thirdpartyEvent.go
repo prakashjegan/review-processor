@@ -6,9 +6,9 @@ import (
 	"gorm.io/gorm"
 )
 
-type JobEvent struct {
+type ThirdPartyEvent struct {
 	Id            uint64         `gorm:"primaryKey" json:"id,omitempty"`
-	JobId         uint64         `gorm:"index" json:"jobId,omitempty"`
+	JobId         int64          `gorm:"index" json:"jobId,omitempty"`
 	JobType       string         `gorm:"index" json:"jobType,omitempty"`
 	EventTime     time.Time      `gorm:"index" json:"eventTime,omitempty"`
 	ProcessedDate time.Time      `json:"processedDate,omitempty"`
@@ -21,4 +21,9 @@ type JobEvent struct {
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 	IsDeleted     bool           `gorm:"-" json:"isDeleted,omitempty"`
 	DeletedBy     string         `gorm:"-" json:"deletedBy,omitempty"`
+
+	ThirdPartyName             string `json:"thirdPartyName,omitempty"`
+	ThirdPartyConfigType       string `json:"thirdPartyConfigType,omitempty"`
+	ThirdPartyConnectionConfig string `json:"thirdPartyConnectionConfig,omitempty"` // Json Structure
+	ThirdPartyReviewConfig     string `json:"thirdPartyReviewConfig,omitempty"`
 }
